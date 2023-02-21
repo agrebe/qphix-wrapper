@@ -9,6 +9,6 @@
 struct Params {
   QPhiX::Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> * geom;
   QDP::multi1d<GAUGE_TYPE> * u;
-  QPhiX::AbstractSolver<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> * solver;
+  QPhiX::AbstractSolver<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> ** solver;
   QPhiX::QDPCloverTermT<FERM_TYPE, GAUGE_TYPE> * invclov_qdp;
 };

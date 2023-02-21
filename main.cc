@@ -121,10 +121,14 @@ void run_test(Params * params_pointer, int solve_num) {
   int Nt = lattSize[3];
 
   QDPIO::cout << "Allocating packed spinor fields" << endl;
-  Spinor *psi_even = (Spinor *)params.geom->allocCBFourSpinor();
-  Spinor *psi_odd = (Spinor *)params.geom->allocCBFourSpinor();
-  Spinor *chi_even = (Spinor *)params.geom->allocCBFourSpinor();
-  Spinor *chi_odd = (Spinor *)params.geom->allocCBFourSpinor();
+  Spinor * psi_even, * psi_odd, * chi_even, * chi_odd;
+  #pragma omp critical
+  {
+    psi_even = (Spinor *)params.geom->allocCBFourSpinor();
+    psi_odd = (Spinor *)params.geom->allocCBFourSpinor();
+    chi_even = (Spinor *)params.geom->allocCBFourSpinor();
+    chi_odd = (Spinor *)params.geom->allocCBFourSpinor();
+  }
   Spinor *psi_s[2] = {psi_even, psi_odd};
   Spinor *chi_s[2] = {chi_even, chi_odd};
 
@@ -141,7 +145,7 @@ void run_test(Params * params_pointer, int solve_num) {
   project_positive(psi_s, Nx, Nt);
   //project_negative(psi_s, Nx, Nt);
 
-  invert(chi_s, psi_s, (void *) &params);
+  invert(chi_s, psi_s, (void *) &params, solve_num);
 
   printf("psi_s[0][0][0][0][0][0] = %f\n", psi_s[0][0][0][0][0][0]);
   printf("psi_s[1][0][0][0][0][0] = %f\n", psi_s[1][0][0][0][0][0]);
@@ -157,7 +161,12 @@ void run_test(Params * params_pointer, int solve_num) {
   printf("Re[chi_s(0,1,0,0)] = %f\n", chi_s[1][2][0][0][0][0]);
 
   // check that we get the same answers after converting to SpinMat format
-  double * spin_mat = (double *) malloc(sizeof(double) * Nt * Nx * Nx * Nx * 144 * 2);
+  double * spin_mat;
+  #pragma omp critical
+  {
+    spin_mat = (double *) malloc(sizeof(double) * Nt * Nx * Nx * Nx * 144 * 2);
+  }
+
   double start = omp_get_wtime();
   to_spin_mat(spin_mat, chi_s, 0, 0, Nx, Nt);
   double end = omp_get_wtime();
@@ -181,10 +190,14 @@ void run_test(Params * params_pointer, int solve_num) {
 
   for (int t = 0; t < 8; t ++)
     printf("t = %d: %e\n", t, correlator[t]);
-  params.geom->free(psi_even);
-  params.geom->free(psi_odd);
-  params.geom->free(chi_even);
-  params.geom->free(chi_odd);
+  #pragma omp critical
+  {
+    params.geom->free(psi_even);
+    params.geom->free(psi_odd);
+    params.geom->free(chi_even);
+    params.geom->free(chi_odd);
+    free(spin_mat);
+  }
 }
 
 
@@ -194,9 +207,13 @@ int main(int argc, char **argv) {
   char filename [] = "cl3_32_48_b6p1_m0p2450-sgf.lime";
   double mass=-0.245;
   double clov_coeff=1.24930970916466;
-  int num_solves = 1;
-  Params * params = (Params*) create_solver(mass, clov_coeff, (char*) filename);
-  for (int i = 0; i < num_solves; i ++) {
-    run_test(params, i);
+  int num_solvers = 6;
+  Params * params = (Params*) create_solver(mass, clov_coeff, (char*) filename, num_solvers);
+  omp_set_nested(1);
+  for (int j = 0; j < 1; j ++) {
+    #pragma omp parallel for
+    for (int i = 0; i < num_solvers; i ++) {
+      run_test(params, i);
+    }
   }
 }
