@@ -12,6 +12,12 @@
 
 #define QPHIX_FERM(x) double (** x) [3][4][2][OUTER_SOALEN]
 
+#ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C
+#endif
+
 struct CliArgs {
   int nrow_in[4] = {32, 32, 32, 48};
 
