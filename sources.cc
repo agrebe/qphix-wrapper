@@ -1,4 +1,5 @@
 #include "sources.h"
+#include "qphix/abs_solver.h"
 
 using namespace std;
 using namespace QPhiX;

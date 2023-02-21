@@ -2,6 +2,7 @@
 #include "setup.h"
 #include "global.h"
 #include "invert.h"
+#include "params.h"
 
 #include "qphix/clover_dslash_def.h"
 #include "qphix/clover_dslash_body.h"
@@ -109,7 +110,8 @@ void pion_correlator_wall_sink(double * correlator,
   }
 }
 
-void run_test(Params params, int solve_num) {
+void run_test(Params * params_pointer, int solve_num) {
+  Params params = *params_pointer;
   typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock Spinor;
   typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::SU3MatrixBlock Gauge;
   typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::CloverBlock Clover;
@@ -139,7 +141,7 @@ void run_test(Params params, int solve_num) {
   project_positive(psi_s, Nx, Nt);
   //project_negative(psi_s, Nx, Nt);
 
-  invert(chi_s, psi_s, params);
+  invert(chi_s, psi_s, (void *) &params);
 
   printf("psi_s[0][0][0][0][0][0] = %f\n", psi_s[0][0][0][0][0][0]);
   printf("psi_s[1][0][0][0][0][0] = %f\n", psi_s[1][0][0][0][0][0]);
@@ -189,11 +191,11 @@ void run_test(Params params, int solve_num) {
 int main(int argc, char **argv) {
   setup_QDP(&argc, &argv);
 
-  std::string filename("cl3_32_48_b6p1_m0p2450-sgf.lime");
+  char filename [] = "cl3_32_48_b6p1_m0p2450-sgf.lime";
   double mass=-0.245;
   double clov_coeff=1.24930970916466;
   int num_solves = 1;
-  Params params = create_solver(mass, clov_coeff, filename);
+  Params * params = (Params*) create_solver(mass, clov_coeff, (char*) filename);
   for (int i = 0; i < num_solves; i ++) {
     run_test(params, i);
   }

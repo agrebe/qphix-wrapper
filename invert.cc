@@ -2,12 +2,15 @@
 #include <omp.h>
 #include "qphix/qdp_packer.h"
 #include "dslashm_w.h"
+#include "setup.h"
+#include "params.h"
 
 using namespace QPhiX;
 
 void invert(QPHIX_FERM(chi_s), // solution
             QPHIX_FERM(psi_s), // input
-            Params params) {   // inverter, etc.
+            void * params_pointer) {   // inverter, etc.
+  Params params = *(Params *) params_pointer;
   // parameters for inversion
   double rsd_target = 1.0e-12;
   int max_iters = 5000;

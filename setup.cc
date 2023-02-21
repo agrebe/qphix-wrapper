@@ -8,6 +8,7 @@
 #include "dslashm_w.h"
 
 #include "setup.h"
+#include "params.h"
 
 void setup_QDP(int * argc, char *** argv) {
   CliArgs args;
@@ -30,13 +31,14 @@ void setup_QDP(int * argc, char *** argv) {
 
 using namespace std;
 using namespace QPhiX;
-Params create_solver(double mass,
+void * create_solver(double mass,
                      double clov_coeff,
-                     const std::string &filename)
+                     char * filename_char)
 {
+  std::string filename (filename_char);
   CliArgs args;
-  Params params;
-  params.geom = new Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> 
+  Params * params = (Params *) malloc(sizeof(Params));
+  params->geom = new Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> 
                   (Layout::subgridLattSize().slice(),
                    args.By,
                    args.Bz,
@@ -47,7 +49,7 @@ Params create_solver(double mass,
                    args.PadXYZ,
                    args.MinCt,
                    true);
-  params.u = new multi1d<GAUGE_TYPE>(4);
+  params->u = new multi1d<GAUGE_TYPE>(4);
 
   typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock Spinor;
   typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::SU3MatrixBlock Gauge;
@@ -78,7 +80,7 @@ Params create_solver(double mass,
   QDPIO::cout << "Reading field from file" << filename << endl;
   XMLReader file_xml, record_xml;
   QDPFileReader from(file_xml, filename, QDPIO_PARALLEL);
-  read(from, record_xml, *params.u);
+  read(from, record_xml, *params->u);
   close(from);
 
   // Set anisotropy parameters -- pick some random numbers
@@ -130,17 +132,17 @@ Params create_solver(double mass,
 
 
   QDPIO::cout << "Allocating packged gauge fields" << endl;
-  Gauge *packed_gauge_cb0 = (Gauge *)params.geom->allocCBGauge();
-  Gauge *packed_gauge_cb1 = (Gauge *)params.geom->allocCBGauge();
+  Gauge *packed_gauge_cb0 = (Gauge *)params->geom->allocCBGauge();
+  Gauge *packed_gauge_cb1 = (Gauge *)params->geom->allocCBGauge();
 
   GaugeInner *packed_gauge_cb0_i = (GaugeInner *)geom_inner->allocCBGauge();
   GaugeInner *packed_gauge_cb1_i = (GaugeInner *)geom_inner->allocCBGauge();
 
   QDPIO::cout << "Allocate Packed Clover Term" << endl;
-  Clover *A_cb0 = (Clover *)params.geom->allocCBClov();
-  Clover *A_cb1 = (Clover *)params.geom->allocCBClov();
-  Clover *A_inv_cb0 = (Clover *)params.geom->allocCBClov();
-  Clover *A_inv_cb1 = (Clover *)params.geom->allocCBClov();
+  Clover *A_cb0 = (Clover *)params->geom->allocCBClov();
+  Clover *A_cb1 = (Clover *)params->geom->allocCBClov();
+  Clover *A_inv_cb0 = (Clover *)params->geom->allocCBClov();
+  Clover *A_inv_cb1 = (Clover *)params->geom->allocCBClov();
   Clover *invclov_packed[2] = {A_inv_cb0, A_inv_cb1};
   Clover *clov_packed[2] = {A_cb0, A_cb1};
 
@@ -155,8 +157,8 @@ Params create_solver(double mass,
 
   // Pack the gauge field
   QDPIO::cout << "Packing gauge field...";
-  qdp_pack_gauge<>(*params.u, packed_gauge_cb0, packed_gauge_cb1, *params.geom);
-  qdp_pack_gauge<>(*params.u, packed_gauge_cb0_i, packed_gauge_cb1_i, *geom_inner);
+  qdp_pack_gauge<>(*params->u, packed_gauge_cb0, packed_gauge_cb1, *params->geom);
+  qdp_pack_gauge<>(*params->u, packed_gauge_cb0_i, packed_gauge_cb1_i, *geom_inner);
 
   Gauge *u_packed[2];
   u_packed[0] = packed_gauge_cb0;
@@ -180,23 +182,23 @@ Params create_solver(double mass,
 
   QDPIO::cout << "Adding on boundary field" << endl;
   // Modify u (antiperiodic BC's)
-  (*params.u)[3] *= where(Layout::latticeCoordinate(3) == (Layout::lattSize()[3] - 1),
+  (*params->u)[3] *= where(Layout::latticeCoordinate(3) == (Layout::lattSize()[3] - 1),
                 Real(t_boundary),
                 Real(1));
 
-  clov_qdp.create(*params.u, clparam);
+  clov_qdp.create(*params->u, clparam);
   QDPIO::cout << "Inverting Clover Term" << endl;
-  params.invclov_qdp = new QDPCloverTermT<FERM_TYPE, GAUGE_TYPE>(clov_qdp);
+  params->invclov_qdp = new QDPCloverTermT<FERM_TYPE, GAUGE_TYPE>(clov_qdp);
   for (int cb = 0; cb < 2; cb++) {
-    params.invclov_qdp->choles(cb);
+    params->invclov_qdp->choles(cb);
   }
   QDPIO::cout << "Done" << endl;
 
   QDPIO::cout << "Packing Clover term..." << endl;
   for (int cb = 0; cb < 2; cb++) {
-    qdp_pack_clover<>(*params.invclov_qdp, invclov_packed[cb], *params.geom, cb);
-    qdp_pack_clover<>(*params.invclov_qdp, invclov_packed_i[cb], *geom_inner, cb);
-    qdp_pack_clover<>(clov_qdp, clov_packed[cb], *params.geom, cb);
+    qdp_pack_clover<>(*params->invclov_qdp, invclov_packed[cb], *params->geom, cb);
+    qdp_pack_clover<>(*params->invclov_qdp, invclov_packed_i[cb], *geom_inner, cb);
+    qdp_pack_clover<>(clov_qdp, clov_packed[cb], *params->geom, cb);
     qdp_pack_clover<>(clov_qdp, clov_packed_i[cb], *geom_inner, cb);
   }
   QDPIO::cout << "Done" << endl;
@@ -210,7 +212,7 @@ Params create_solver(double mass,
     = new EvenOddCloverOperator<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> (u_packed,
                                               clov_packed[1],
                                               invclov_packed[0],
-                                              params.geom,
+                                              params->geom,
                                               t_boundary,
                                               aniso_fac_s,
                                               aniso_fac_t);
@@ -225,7 +227,7 @@ Params create_solver(double mass,
                                                          aniso_fac_t);
   InvBiCGStab<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS> *solver_inner
     = new InvBiCGStab<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>(*M_inner, max_iters);
-  params.solver = new InvRichardsonMultiPrec<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS, INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>
+  params->solver = new InvRichardsonMultiPrec<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS, INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>
                       (*M, *solver_inner, 0.1, 5000);
-  return params;
+  return (void *) params;
 }

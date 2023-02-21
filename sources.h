@@ -1,5 +1,4 @@
 #include "global.h"
-#include "qphix/abs_solver.h"
 
 void point_source(QPHIX_FERM(psi_s),
                   int x, int y, int z, int t,
