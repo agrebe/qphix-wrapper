@@ -128,10 +128,10 @@ void run_test(Params * params_pointer, int solve_num) {
   double * correlator; // pion correlator
   #pragma omp critical
   {
-    psi_even = (Spinor *)params.geom->allocCBFourSpinor();
-    psi_odd = (Spinor *)params.geom->allocCBFourSpinor();
-    chi_even = (Spinor *)params.geom->allocCBFourSpinor();
-    chi_odd = (Spinor *)params.geom->allocCBFourSpinor();
+    psi_even = (Spinor *)allocate_spinor(params_pointer);
+    psi_odd = (Spinor *)allocate_spinor(params_pointer);
+    chi_even = (Spinor *)allocate_spinor(params_pointer);
+    chi_odd = (Spinor *)allocate_spinor(params_pointer);
     correlator = (double*) calloc(Nt, sizeof(double));
   }
   Spinor *psi_s[2] = {psi_even, psi_odd};
@@ -194,10 +194,10 @@ void run_test(Params * params_pointer, int solve_num) {
     printf("t = %d: %e\n", t, correlator[t]);
   #pragma omp critical
   {
-    params.geom->free(psi_even);
-    params.geom->free(psi_odd);
-    params.geom->free(chi_even);
-    params.geom->free(chi_odd);
+    free_spinor(params_pointer, (void*) psi_even);
+    free_spinor(params_pointer, (void*) psi_odd);
+    free_spinor(params_pointer, (void*) chi_even);
+    free_spinor(params_pointer, (void*) chi_odd);
     free(spin_mat);
     free(correlator);
   }
@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
   int num_solvers = 6;
   Params * params = (Params*) create_solver(mass, clov_coeff, (char*) filename, num_solvers);
   omp_set_nested(1);
-  for (int j = 0; j < 1; j ++) {
+  for (int j = 0; j < 4; j ++) {
     #pragma omp parallel for
     for (int i = 0; i < num_solvers; i ++) {
       run_test(params, i);

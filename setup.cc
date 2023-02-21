@@ -10,6 +10,20 @@
 #include "setup.h"
 #include "params.h"
 
+// WARNING: This is not thread safe
+// Wrap calls to this in #pragma omp critical if needed
+void * allocate_spinor(void * params) {
+  void * spinor;
+  spinor = ((Params *) params)->geom->allocCBFourSpinor();
+  return spinor;
+}
+
+// also not thread safe
+void free_spinor(void * params, void * spinor) {
+  ((Params *) params)->geom->free(
+    (typename QPhiX::Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock *) spinor);
+}
+
 void setup_QDP(int * argc, char *** argv) {
   CliArgs args;
   printf("Initializing QDP\n");
