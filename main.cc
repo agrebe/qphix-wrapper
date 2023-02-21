@@ -115,19 +115,24 @@ void run_test(Params * params_pointer, int solve_num) {
   typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock Spinor;
   typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::SU3MatrixBlock Gauge;
   typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::CloverBlock Clover;
+  double start, end;
 
   const multi1d<int> &lattSize = Layout::subgridLattSize();
   int Nx = lattSize[0];
   int Nt = lattSize[3];
 
+  start = omp_get_wtime();
+
   QDPIO::cout << "Allocating packed spinor fields" << endl;
   Spinor * psi_even, * psi_odd, * chi_even, * chi_odd;
+  double * correlator; // pion correlator
   #pragma omp critical
   {
     psi_even = (Spinor *)params.geom->allocCBFourSpinor();
     psi_odd = (Spinor *)params.geom->allocCBFourSpinor();
     chi_even = (Spinor *)params.geom->allocCBFourSpinor();
     chi_odd = (Spinor *)params.geom->allocCBFourSpinor();
+    correlator = (double*) calloc(Nt, sizeof(double));
   }
   Spinor *psi_s[2] = {psi_even, psi_odd};
   Spinor *chi_s[2] = {chi_even, chi_odd};
@@ -135,15 +140,14 @@ void run_test(Params * params_pointer, int solve_num) {
   // Make a random source
   QDPIO::cout << "Initializing QDP++ input spinor" << endl;
 
-  // pion correlator
-  double * correlator = (double*) calloc(Nt, sizeof(double));
-
   //point_source(psi_s, 0, 0, 0, 0, 0, 0, Nx, Nt);
   int color = solve_num / 4;
   int spin  = solve_num % 4;
   wall_source(psi_s, 0, spin, color, Nx, Nt);
   project_positive(psi_s, Nx, Nt);
   //project_negative(psi_s, Nx, Nt);
+  end = omp_get_wtime();
+  printf("Pre-inversion setup time: %f sec\n", end - start);
 
   invert(chi_s, psi_s, (void *) &params, solve_num);
 
@@ -167,11 +171,9 @@ void run_test(Params * params_pointer, int solve_num) {
     spin_mat = (double *) malloc(sizeof(double) * Nt * Nx * Nx * Nx * 144 * 2);
   }
 
-  double start = omp_get_wtime();
+  start = omp_get_wtime();
   to_spin_mat(spin_mat, chi_s, 0, 0, Nx, Nt);
-  double end = omp_get_wtime();
 
-  printf("Conversion to SpinMat format: %f sec\n", end - start);
 
   // real and imaginary parts at 0
   printf("Re[chi_s(0,0,0,0)] = %f\n", spin_mat[0]);
@@ -197,7 +199,10 @@ void run_test(Params * params_pointer, int solve_num) {
     params.geom->free(chi_even);
     params.geom->free(chi_odd);
     free(spin_mat);
+    free(correlator);
   }
+  end = omp_get_wtime();
+  printf("Post-inversion time: %f sec\n", end - start);
 }
 
 
