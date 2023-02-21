@@ -1,6 +1,6 @@
 #include "global.h"
 #include "setup.h"
 
-void invert(typename QPhiX::Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock ** chi_s, // solution
-            typename QPhiX::Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock ** psi_s, // input
+void invert(QPHIX_FERM(chi_s),
+            QPHIX_FERM(psi_s),
             Params params);

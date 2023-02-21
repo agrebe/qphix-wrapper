@@ -3,7 +3,7 @@
 using namespace std;
 using namespace QPhiX;
 
-void point_source(typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock ** psi_s,
+void point_source(QPHIX_FERM (psi_s),
                   int x, int y, int z, int t,
                   int spin, int col,
                   int nx, int nt) {
@@ -33,7 +33,7 @@ void point_source(typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMP
   psi_s[cb][index][col][spin][0][v] = 1;
 }
 
-void wall_source(typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock ** psi_s,
+void wall_source(QPHIX_FERM(psi_s),
                  int t,
                  int spin, int col,
                  int nx, int nt) {
@@ -71,7 +71,7 @@ void wall_source(typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPR
 }
 
 // parity projectors for sources
-void project_positive(typename QPhiX::Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock ** psi_s,
+void project_positive(QPHIX_FERM(psi_s),
                       int nx, int nt) {
   int vol = (nx * nx * nx * nt);      // number of sites
   int max_index = vol / (2 * OUTER_SOALEN); // number of vecs per checkerboard
@@ -91,7 +91,7 @@ void project_positive(typename QPhiX::Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_S
             }
 }
 
-void project_negative(typename QPhiX::Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock ** psi_s,
+void project_negative(QPHIX_FERM(psi_s),
                       int nx, int nt) {
   int vol = (nx * nx * nx * nt);      // number of sites
   int max_index = vol / (2 * OUTER_SOALEN); // number of vecs per checkerboard
@@ -118,7 +118,7 @@ void project_negative(typename QPhiX::Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_S
 // s1, c1 are source and s2, c2 are sink
 // this matches what is written out by QIO after calling chroma
 void to_spin_mat(double * output,
-    typename QPhiX::Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock ** psi_s,
+    QPHIX_FERM(psi_s),
     int s1, int c1,
     int nx, int nt) {
   int nvecs = nx / (2 * OUTER_SOALEN);

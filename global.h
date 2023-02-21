@@ -10,6 +10,8 @@
 #define GAUGE_TYPE   QDP::LatticeColorMatrixD
 #define FERM_TYPE    QDP::LatticeDiracFermionD
 
+#define QPHIX_FERM(x) double (** x) [3][4][2][OUTER_SOALEN]
+
 struct CliArgs {
   int nrow_in[4] = {32, 32, 32, 48};
 

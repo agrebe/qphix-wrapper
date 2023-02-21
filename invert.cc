@@ -5,10 +5,9 @@
 
 using namespace QPhiX;
 
-void invert(typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock ** chi_s, // solution
-            typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock ** psi_s, // input
+void invert(QPHIX_FERM(chi_s), // solution
+            QPHIX_FERM(psi_s), // input
             Params params) {   // inverter, etc.
-  typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock Spinor;
   // parameters for inversion
   double rsd_target = 1.0e-12;
   int max_iters = 5000;
