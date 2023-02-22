@@ -75,9 +75,9 @@ void invert(QPHIX_FERM(chi_s), // solution
   unsigned long total_flops =
       (site_flops + (1320 + 504 + 1320 + 504 + 48) * mv_apps) * num_cb_sites;
 
-  masterPrintf("RICHARDSON: iters=%d\n", niters);
-  masterPrintf("RICHARDSON Time for solve=%16.8e sec\n", (time2 - time1));
-  masterPrintf("RICHARDSON GFLOPS=%e\n",
+  printf("RICHARDSON: iters=%d\n", niters);
+  printf("RICHARDSON Time for solve=%16.8e sec\n", (time2 - time1));
+  printf("RICHARDSON GFLOPS=%e\n",
                1.0e-9 * (double)(total_flops) / (time2 - time1));
 
   printf("Setup and preconditioner time: %f sec\n", time1 - time0);

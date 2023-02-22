@@ -1,10 +1,13 @@
-QDPCONFIG = /work/01112/tg803910/stampede2/install/qdpxx-scalar/bin/qdp++-config
+QDP = /work/01112/tg803910/stampede2/install/qdpxx-scalar
+QPHIX = /work/01112/tg803910/stampede2/install/qphix-scalar
+QDPCONFIG = $(QDP)/bin/qdp++-config
 
-CC = icc
-CFLAGS = -g -qopenmp $(shell $(QDPCONFIG) --cxxflags) -I/work/01112/tg803910/stampede2/install/qphix/include/
-#CFLAGS = -g -O2 -I/work/01112/tg803910/stampede2/install/qdpxx/include -I/usr/include/libxml2 -I/work/01112/tg803910/stampede2/install/qmp/include -qopenmp -I/work/01112/tg803910/stampede2/install/qphix/include/ -Wall
+
+CC = icpc
+CFLAGS = -g -qopenmp $(shell $(QDPCONFIG) --cxxflags) -I$(QPHIX)/include/
+#CFLAGS = -g -O2 -I$(QDP)/include -I/usr/include/libxml2 -I/work/01112/tg803910/stampede2/install/qmp/include -qopenmp -I$(QPHIX)/include/ -Wall
 LIBS = -lqphix_solver -lqphix_codegen $(shell $(QDPCONFIG) --libs)
-LDFLAGS = -L/work/01112/tg803910/stampede2/install/qphix/lib $(shell $(QDPCONFIG) --ldflags) -L.
+LDFLAGS = -L$(QPHIX)/lib $(shell $(QDPCONFIG) --ldflags) -L.
 
 clover-test: main.o libqphix-wrapper.a
 	$(CC) $(CFLAGS) $^ -o $@ -lqphix-wrapper $(LIBS) $(LDFLAGS)
