@@ -47,8 +47,7 @@ using namespace std;
 using namespace QPhiX;
 void * create_solver(double mass,
                      double clov_coeff,
-                     char * filename_char,
-                     int num_solvers)
+                     char * filename_char)
 {
   std::string filename (filename_char);
   CliArgs args;
@@ -220,32 +219,26 @@ void * create_solver(double mass,
 
   int max_iters = 5000;
 
+  EvenOddCloverOperator<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> * M
+    = new EvenOddCloverOperator<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> (u_packed,
+                                              clov_packed[1],
+                                              invclov_packed[0],
+                                              params->geom,
+                                              t_boundary,
+                                              aniso_fac_s,
+                                              aniso_fac_t);
 
-  params->solver = (AbstractSolver<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> **) 
-          malloc(sizeof(AbstractSolver<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> *) * num_solvers);
-
-  for (int solver_num = 0; solver_num < num_solvers; solver_num ++) {
-    EvenOddCloverOperator<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> * M
-      = new EvenOddCloverOperator<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> (u_packed,
-                                                clov_packed[1],
-                                                invclov_packed[0],
-                                                params->geom,
-                                                t_boundary,
-                                                aniso_fac_s,
-                                                aniso_fac_t);
-
-    EvenOddCloverOperator<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS> * M_inner
-      = new EvenOddCloverOperator<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>(u_packed_i,
-                                                           clov_packed_i[1],
-                                                           invclov_packed_i[0],
-                                                           geom_inner,
-                                                           t_boundary,
-                                                           aniso_fac_s,
-                                                           aniso_fac_t);
-    InvBiCGStab<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS> *solver_inner
-      = new InvBiCGStab<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>(*M_inner, max_iters);
-    params->solver[solver_num] = new InvRichardsonMultiPrec<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS, INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>
-                        (*M, *solver_inner, 0.1, 5000);
-  }
+  EvenOddCloverOperator<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS> * M_inner
+    = new EvenOddCloverOperator<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>(u_packed_i,
+                                                         clov_packed_i[1],
+                                                         invclov_packed_i[0],
+                                                         geom_inner,
+                                                         t_boundary,
+                                                         aniso_fac_s,
+                                                         aniso_fac_t);
+  InvBiCGStab<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS> *solver_inner
+    = new InvBiCGStab<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>(*M_inner, max_iters);
+  params->solver = new InvRichardsonMultiPrec<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS, INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>
+                      (*M, *solver_inner, 0.1, 5000);
   return (void *) params;
 }

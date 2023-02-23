@@ -9,8 +9,7 @@ using namespace QPhiX;
 
 void invert(QPHIX_FERM(chi_s), // solution
             QPHIX_FERM(psi_s), // input
-            void * params_pointer,   // inverter, etc.
-            int solver_num) {
+            void * params_pointer) {   // inverter, etc.
   Params params = *(Params *) params_pointer;
   // parameters for inversion
   double rsd_target = 1.0e-12;
@@ -42,7 +41,7 @@ void invert(QPHIX_FERM(chi_s), // solution
   double time1 = omp_get_wtime();
 
   // actual inversion
-  (*params.solver[solver_num])
+  (*params.solver)
                   (chi_s[1],
                    psi_s[1],
                    rsd_target,
