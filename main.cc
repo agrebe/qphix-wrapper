@@ -149,7 +149,7 @@ void run_test(Params * params_pointer, int solve_num) {
   end = omp_get_wtime();
   printf("Pre-inversion setup time: %f sec\n", end - start);
 
-  invert(chi_s, psi_s, (void *) &params, solve_num);
+  invert(chi_s, psi_s, (void *) &params);
 
   printf("psi_s[0][0][0][0][0][0] = %f\n", psi_s[0][0][0][0][0][0]);
   printf("psi_s[1][0][0][0][0][0] = %f\n", psi_s[1][0][0][0][0][0]);
@@ -212,13 +212,9 @@ int main(int argc, char **argv) {
   char filename [] = "cl3_32_48_b6p1_m0p2450-sgf.lime";
   double mass=-0.245;
   double clov_coeff=1.24930970916466;
-  int num_solvers = 6;
-  Params * params = (Params*) create_solver(mass, clov_coeff, (char*) filename, num_solvers);
+  Params * params = (Params*) create_solver(mass, clov_coeff, (char*) filename);
   omp_set_nested(1);
-  for (int j = 0; j < 4; j ++) {
-    #pragma omp parallel for
-    for (int i = 0; i < num_solvers; i ++) {
-      run_test(params, i);
-    }
+  for (int j = 0; j < 6; j ++) {
+    run_test(params, j);
   }
 }

@@ -30,7 +30,7 @@ void point_source(QPHIX_FERM (psi_s),
   x /= OUTER_SOALEN;
   // finally get index in lattice
   // x runs fastest, t is slowest
-  int index = ((t * nx + z) * nx + y) * nx + x;
+  int index = ((t * nx + z) * nx + y) * nx / (OUTER_SOALEN * 2) + x;
   psi_s[cb][index][col][spin][0][v] = 1;
 }
 
@@ -115,7 +115,7 @@ void project_negative(QPHIX_FERM(psi_s),
 }
 
 // convert to spin_mat format
-// this will be a tensor with indices (t, z, y, x, s1, s2, c1, c2)
+// this will be a tensor with indices (t, z, y, x, c2, c1, s2, s1)
 // s1, c1 are source and s2, c2 are sink
 // this matches what is written out by QIO after calling chroma
 void to_spin_mat(double * output,
@@ -142,7 +142,7 @@ void to_spin_mat(double * output,
                   // inverting gives (x % 2) = (cb ^ y ^ z ^ t) & 1
                   int pos_index = ((t * nx + z) * nx + y) * nx + x_coord * 2 + ((cb ^ y ^ z ^ t) & 1);
                   for (int i = 0; i < 2; i ++) { // real versus imag
-                    int final_index = ((((pos_index * 4 + s1) * 4 + s2) * 3 + c1) * 3 + c2) * 2 + i;
+                    int final_index = ((((pos_index * 3 + c2) * 3 + c1) * 4 + s2) * 4 + s1) * 2 + i;
                     output[final_index] = psi_s[cb][ind][c2][s2][i][x];
                   }
                 }

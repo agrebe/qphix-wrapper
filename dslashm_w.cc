@@ -167,6 +167,44 @@ void dslash(LatticeFermionD &chi,
   // needed
   // for other Nd
   if (isign > 0) {
+    chi[rb[cb]] = zero;
+    LatticeFermionD temp[QDP_ND * 2];
+    #pragma omp parallel for
+    for (int i = 0; i < QDP_ND * 2; i ++) {
+      if (i == 0)
+        temp[i] = spinReconstructDir0Minus(
+                      u[0] * shift(spinProjectDir0Minus(psi), FORWARD, 0));
+      else if (i == 1)
+        temp[i] = spinReconstructDir0Plus(
+                      shift(adj(u[0]) * spinProjectDir0Plus(psi), BACKWARD, 0));
+      else if (i == 2)
+        temp[i] = spinReconstructDir1Minus(
+                        u[1] * shift(spinProjectDir1Minus(psi), FORWARD, 1));
+      else if (i == 3)
+        temp[i] = spinReconstructDir1Plus(
+                      shift(adj(u[1]) * spinProjectDir1Plus(psi), BACKWARD, 1));
+      else if (i == 4)
+        temp[i] = spinReconstructDir2Minus(
+                        u[2] * shift(spinProjectDir2Minus(psi), FORWARD, 2));
+      else if (i == 5)
+        temp[i] = spinReconstructDir2Plus(
+                      shift(adj(u[2]) * spinProjectDir2Plus(psi), BACKWARD, 2));
+      else if (i == 6)
+        temp[i] = spinReconstructDir3Minus(
+                        u[3] * shift(spinProjectDir3Minus(psi), FORWARD, 3));
+      else if (i == 7)
+        temp[i] = spinReconstructDir3Plus(
+                      shift(adj(u[3]) * spinProjectDir3Plus(psi), BACKWARD, 3));
+    }
+    #pragma omp parallel for
+    for (int i = 0; i < QDP_ND; i ++)
+      temp[i] += temp[i + QDP_ND];
+    #pragma omp parallel for
+    for (int i = 0; i < QDP_ND/2; i ++)
+      temp[i] += temp[i + QDP_ND/2];
+    for (int i = 0; i < QDP_ND/2; i ++)
+      chi[rb[cb]] += temp[i];
+    /*
     chi[rb[cb]] = spinReconstructDir0Minus(
                       u[0] * shift(spinProjectDir0Minus(psi), FORWARD, 0)) +
                   spinReconstructDir0Plus(
@@ -193,6 +231,7 @@ void dslash(LatticeFermionD &chi,
 #error "Unsupported number of dimensions"
 #endif
         ;
+*/
   } else {
     chi[rb[cb]] =
         spinReconstructDir0Plus(u[0] * shift(spinProjectDir0Plus(psi), FORWARD, 0)) +

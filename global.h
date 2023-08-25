@@ -25,7 +25,7 @@ struct CliArgs {
   int Bz = 4;
   int PadXY = 0;
   int PadXYZ = 0;
-  int NCores = 16;
+  int NCores = 40;
   int Sy = 1;
   int Sz = 1;
   int MinCt = 1;
