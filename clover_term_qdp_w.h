@@ -855,7 +855,6 @@ void applySiteLoop(int lo, int hi, int MyId, ApplyArgs<T> *arg)
   const multi1d<int> &tab = rb[cb].siteTable();
 
   // Now just loop from low to high sites...
-  #pragma omp parallel for
   for (int ssite = lo; ssite < hi; ++ssite) {
 
     int site = tab[ssite];
