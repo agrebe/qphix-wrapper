@@ -4,10 +4,11 @@
 using namespace std;
 using namespace QPhiX;
 
-void point_source(QPHIX_FERM (psi_s),
+void point_source(double ** qphix_ferm,
                   int x, int y, int z, int t,
                   int spin, int col,
                   int nx, int nt) {
+  QPHIX_FERM(psi_s) = (double (**)[3][4][2][OUTER_SOALEN]) qphix_ferm;
   int vol = (nx * nx * nx * nt);      // number of sites
   int max_index = vol / (2 * OUTER_SOALEN); // number of vecs per checkerboard
   // zero out the source
@@ -34,10 +35,11 @@ void point_source(QPHIX_FERM (psi_s),
   psi_s[cb][index][col][spin][0][v] = 1;
 }
 
-void wall_source(QPHIX_FERM(psi_s),
+void wall_source(double ** qphix_ferm,
                  int t,
                  int spin, int col,
                  int nx, int nt) {
+  QPHIX_FERM(psi_s) = (double (**)[3][4][2][OUTER_SOALEN]) qphix_ferm;
   int vol = (nx * nx * nx * nt);      // number of sites
   int max_index = vol / (2 * OUTER_SOALEN); // number of vecs per checkerboard
   // zero out the source
@@ -72,8 +74,9 @@ void wall_source(QPHIX_FERM(psi_s),
 }
 
 // parity projectors for sources
-void project_positive(QPHIX_FERM(psi_s),
+void project_positive(double ** qphix_ferm,
                       int nx, int nt) {
+  QPHIX_FERM(psi_s) = (double (**)[3][4][2][OUTER_SOALEN]) qphix_ferm;
   int vol = (nx * nx * nx * nt);      // number of sites
   int max_index = vol / (2 * OUTER_SOALEN); // number of vecs per checkerboard
   // zero out the source
@@ -92,8 +95,9 @@ void project_positive(QPHIX_FERM(psi_s),
             }
 }
 
-void project_negative(QPHIX_FERM(psi_s),
+void project_negative(double ** qphix_ferm,
                       int nx, int nt) {
+  QPHIX_FERM(psi_s) = (double (**)[3][4][2][OUTER_SOALEN]) qphix_ferm;
   int vol = (nx * nx * nx * nt);      // number of sites
   int max_index = vol / (2 * OUTER_SOALEN); // number of vecs per checkerboard
   // zero out the source
@@ -119,9 +123,10 @@ void project_negative(QPHIX_FERM(psi_s),
 // s1, c1 are source and s2, c2 are sink
 // this matches what is written out by QIO after calling chroma
 void to_spin_mat(double * output,
-    QPHIX_FERM(psi_s),
+    double ** qphix_ferm,
     int s1, int c1,
     int nx, int nt) {
+  QPHIX_FERM(psi_s) = (double (**)[3][4][2][OUTER_SOALEN]) qphix_ferm;
   int nvecs = nx / (2 * OUTER_SOALEN);
   int pxy = nvecs * nx;
   int pxyz = pxy * nx;

@@ -23,9 +23,10 @@ using namespace QPhiX;
 
 
 void pion_correlator(double * correlator,
-    typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock **psi_s,
+    double ** qphix_ferm,
     const Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> &s)
 {
+    typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock **psi_s = (Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock**) qphix_ferm;
   // Get the subgrid latt size.
   int Nt = s.Nt();
   int Nz = s.Nz();
@@ -124,18 +125,15 @@ void run_test(Params * params_pointer, int solve_num) {
   start = omp_get_wtime();
 
   QDPIO::cout << "Allocating packed spinor fields" << endl;
-  Spinor * psi_even, * psi_odd, * chi_even, * chi_odd;
-  double * correlator; // pion correlator
-  #pragma omp critical
-  {
-    psi_even = (Spinor *)allocate_spinor(params_pointer);
-    psi_odd = (Spinor *)allocate_spinor(params_pointer);
-    chi_even = (Spinor *)allocate_spinor(params_pointer);
-    chi_odd = (Spinor *)allocate_spinor(params_pointer);
-    correlator = (double*) calloc(Nt, sizeof(double));
+
+  double ** psi_s = (double **) malloc(sizeof(double*) * 2);
+  double ** chi_s = (double **) malloc(sizeof(double*) * 2);
+  int vol = Nx * Nx * Nx * Nt; // FIXME
+  for (int j = 0; j < 2; j ++) {
+    psi_s[j] = (double*) malloc(sizeof(double) * 12 * 2 * vol);
+    chi_s[j] = (double*) malloc(sizeof(double) * 12 * 2 * vol);
   }
-  Spinor *psi_s[2] = {psi_even, psi_odd};
-  Spinor *chi_s[2] = {chi_even, chi_odd};
+  double * correlator = (double *) malloc(sizeof(double) * Nt * 2);
 
   // Make a random source
   QDPIO::cout << "Initializing QDP++ input spinor" << endl;
@@ -149,20 +147,7 @@ void run_test(Params * params_pointer, int solve_num) {
   end = omp_get_wtime();
   printf("Pre-inversion setup time: %f sec\n", end - start);
 
-  invert((double **) chi_s, (double **) psi_s, (void *) &params);
-
-  printf("psi_s[0][0][0][0][0][0] = %f\n", psi_s[0][0][0][0][0][0]);
-  printf("psi_s[1][0][0][0][0][0] = %f\n", psi_s[1][0][0][0][0][0]);
-  // real and imaginary parts at 0
-  printf("Re[chi_s(0,0,0,0)] = %f\n", chi_s[0][0][0][0][0][0]);
-  printf("Im[chi_s(0,0,0,0)] = %f\n", chi_s[0][0][0][0][1][0]);
-  // real part at (1, 0, 0, 0)
-  printf("Re[chi_s(1,0,0,0)] = %f\n", chi_s[1][0][0][0][0][0]);
-  // real part at (2, 0, 0, 0)
-  printf("Re[chi_s(2,0,0,0)] = %f\n", chi_s[0][0][0][0][0][1]);
-  printf("Re[chi_s(8,0,0,0)] = %f\n", chi_s[0][0][0][0][0][4]);
-  printf("Re[chi_s(16,0,0,0)] = %f\n", chi_s[0][1][0][0][0][0]);
-  printf("Re[chi_s(0,1,0,0)] = %f\n", chi_s[1][2][0][0][0][0]);
+  invert(chi_s, psi_s, (void *) &params);
 
   // check that we get the same answers after converting to SpinMat format
   double * spin_mat;
@@ -175,32 +160,18 @@ void run_test(Params * params_pointer, int solve_num) {
   to_spin_mat(spin_mat, chi_s, 0, 0, Nx, Nt);
 
 
-  // real and imaginary parts at 0
-  printf("Re[chi_s(0,0,0,0)] = %f\n", spin_mat[0]);
-  printf("Im[chi_s(0,0,0,0)] = %f\n", spin_mat[1]);
-  // real part at (1, 0, 0, 0)
-  printf("Re[chi_s(1,0,0,0)] = %f\n", spin_mat[288]);
-  // real part at (2, 0, 0, 0)
-  printf("Re[chi_s(2,0,0,0)] = %f\n", spin_mat[288*2]);
-  printf("Re[chi_s(8,0,0,0)] = %f\n", spin_mat[288*8]);
-  printf("Re[chi_s(16,0,0,0)] = %f\n", spin_mat[288*16]);
-  printf("Re[chi_s(0,1,0,0)] = %f\n", spin_mat[288*32]);
-
   // pion correlator
   pion_correlator(correlator, chi_s, *params.geom);
   //pion_correlator_wall_sink(correlator, chi_s, *params.geom);
 
   for (int t = 0; t < 8; t ++)
     printf("t = %d: %e\n", t, correlator[t]);
-  #pragma omp critical
-  {
-    free_spinor(params_pointer, (void*) psi_even);
-    free_spinor(params_pointer, (void*) psi_odd);
-    free_spinor(params_pointer, (void*) chi_even);
-    free_spinor(params_pointer, (void*) chi_odd);
-    free(spin_mat);
-    free(correlator);
+  for (int j = 0; j < 2; j ++) {
+    free(psi_s[j]);
+    free(chi_s[j]);
   }
+  free(psi_s);
+  free(chi_s);
   end = omp_get_wtime();
   printf("Post-inversion time: %f sec\n", end - start);
 }
