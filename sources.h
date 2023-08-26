@@ -20,3 +20,11 @@ EXTERN_C void to_spin_mat(double * output,
              QPHIX_FERM(psi_s),
              int s1, int c1,
              int nx, int nt);
+
+EXTERN_C void to_qc_single(float * output,
+    QPHIX_FERM(psi_s),
+    int nx, int nt);
+
+EXTERN_C void from_qc_single(float * input,
+    QPHIX_FERM(psi_s),
+    int nx, int nt);

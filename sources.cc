@@ -154,3 +154,81 @@ void to_spin_mat(double * output,
     } // t
   } // cb
 }
+
+// convert to qc format
+// this will be a fermion with indices (t, z, y, x, c, s)
+// spin (and real/imag) run fastest
+void to_qc_single(float * output,
+    QPHIX_FERM(psi_s),
+    int nx, int nt) {
+  int nvecs = nx / (2 * OUTER_SOALEN);
+  int pxy = nvecs * nx;
+  int pxyz = pxy * nx;
+  // adapted from qdp_packer_parscalar.h
+  for (int cb = 0; cb < 2; cb ++) {
+    for (int64_t t = 0; t < nt; t++) {
+      for (int64_t z = 0; z < nx; z++) {
+        for (int64_t y = 0; y < nx; y++) {
+          for (int64_t s_index = 0; s_index < nvecs; s_index++) {
+            for (int c = 0; c < 3; c++) {
+              for (int s = 0; s < 4; s++) {
+                for (int x = 0; x < OUTER_SOALEN; x++) {
+
+                  int ind = t * pxyz + z * pxy + y * nvecs + s_index; //((t*Nz+z)*Ny+y)*nvecs+s;
+                  int x_coord = s_index * OUTER_SOALEN + x;
+
+                  // parity bit: cb = (x ^ y ^ z ^ t) & 1, where x is actual x-coordinate
+                  // inverting gives (x % 2) = (cb ^ y ^ z ^ t) & 1
+                  int pos_index = ((t * nx + z) * nx + y) * nx + x_coord * 2 + ((cb ^ y ^ z ^ t) & 1);
+                  for (int i = 0; i < 2; i ++) { // real versus imag
+                    int qc_index = ((pos_index * 3 + c) * 4 + s) * 2 + i;
+                    output[qc_index] = psi_s[cb][ind][c][s][i][x];
+                  }
+                }
+              }
+            }
+          } // s
+        } // y
+      } // z
+    } // t
+  } // cb
+}
+
+// convert to qc format
+// this will be a fermion with indices (t, z, y, x, c, s)
+// spin (and real/imag) run fastest
+void from_qc_single(float * input,
+    QPHIX_FERM(psi_s),
+    int nx, int nt) {
+  int nvecs = nx / (2 * OUTER_SOALEN);
+  int pxy = nvecs * nx;
+  int pxyz = pxy * nx;
+  // adapted from qdp_packer_parscalar.h
+  for (int cb = 0; cb < 2; cb ++) {
+    for (int64_t t = 0; t < nt; t++) {
+      for (int64_t z = 0; z < nx; z++) {
+        for (int64_t y = 0; y < nx; y++) {
+          for (int64_t s_index = 0; s_index < nvecs; s_index++) {
+            for (int c = 0; c < 3; c++) {
+              for (int s = 0; s < 4; s++) {
+                for (int x = 0; x < OUTER_SOALEN; x++) {
+
+                  int ind = t * pxyz + z * pxy + y * nvecs + s_index; //((t*Nz+z)*Ny+y)*nvecs+s;
+                  int x_coord = s_index * OUTER_SOALEN + x;
+
+                  // parity bit: cb = (x ^ y ^ z ^ t) & 1, where x is actual x-coordinate
+                  // inverting gives (x % 2) = (cb ^ y ^ z ^ t) & 1
+                  int pos_index = ((t * nx + z) * nx + y) * nx + x_coord * 2 + ((cb ^ y ^ z ^ t) & 1);
+                  for (int i = 0; i < 2; i ++) { // real versus imag
+                    int qc_index = ((pos_index * 3 + c) * 4 + s) * 2 + i;
+                    psi_s[cb][ind][c][s][i][x] = input[qc_index];
+                  }
+                }
+              }
+            }
+          } // s
+        } // y
+      } // z
+    } // t
+  } // cb
+}
