@@ -7,9 +7,11 @@
 
 using namespace QPhiX;
 
-void invert(QPHIX_FERM(chi_s), // solution
-            QPHIX_FERM(psi_s), // input
+void invert(double ** solution,
+            double ** input,
             void * params_pointer) {   // inverter, etc.
+  QPHIX_FERM(chi_s) = (double (**)[3][4][2][OUTER_SOALEN]) solution;
+  QPHIX_FERM(psi_s) = (double (**)[3][4][2][OUTER_SOALEN]) input;
   Params params = *(Params *) params_pointer;
   // parameters for inversion
   double rsd_target = 1.0e-12;
@@ -30,10 +32,14 @@ void invert(QPHIX_FERM(chi_s), // solution
   double time0 = omp_get_wtime();
   qdp_unpack_cb_spinor<>(psi_s[0], psi, *params.geom, 0);
   qdp_unpack_cb_spinor<>(psi_s[1], psi, *params.geom, 1);
+  double time0A = omp_get_wtime();
   Double betaFactor = Real(0.5); // what is this for?  no idea
   params.invclov_qdp->apply(clov_psi, psi, 1, 0);
+  double time0B = omp_get_wtime();
   dslash(psi2, *params.u, clov_psi, 1, 1);
+  double time0C = omp_get_wtime();
   psi[rb[1]] += betaFactor * psi2; // sign fitted to data
+  double time0D = omp_get_wtime();
   // repackage
   qdp_pack_spinor<>(psi, psi_s[0], psi_s[1], *params.geom);
 
@@ -80,6 +86,11 @@ void invert(QPHIX_FERM(chi_s), // solution
                1.0e-9 * (double)(total_flops) / (time2 - time1));
 
   printf("Setup and preconditioner time: %f sec\n", time1 - time0);
+  printf(" - unpacking:                  %f sec\n", time0A - time0);
+  printf(" - applying invclov:           %f sec\n", time0B - time0A);
+  printf(" - applying dslash:            %f sec\n", time0C - time0B);
+  printf(" - applying 0.5 factor:        %f sec\n", time0D - time0C);
+  printf(" - packing:                    %f sec\n", time1 - time0D);
   printf("QPhiX inverter time:           %f sec\n", time2 - time1);
   printf("Postconditioner time:          %f sec\n", time3 - time2);
 }

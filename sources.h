@@ -22,9 +22,9 @@ EXTERN_C void to_spin_mat(double * output,
              int nx, int nt);
 
 EXTERN_C void to_qc_single(float * output,
-    QPHIX_FERM(psi_s),
+    double ** qphix_ferm,
     int nx, int nt);
 
 EXTERN_C void from_qc_single(float * input,
-    QPHIX_FERM(psi_s),
+    double ** qphix_ferm,
     int nx, int nt);

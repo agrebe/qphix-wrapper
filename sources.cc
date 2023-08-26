@@ -159,8 +159,9 @@ void to_spin_mat(double * output,
 // this will be a fermion with indices (t, z, y, x, c, s)
 // spin (and real/imag) run fastest
 void to_qc_single(float * output,
-    QPHIX_FERM(psi_s),
+    double ** qphix_ferm,
     int nx, int nt) {
+  QPHIX_FERM(psi_s) = (double (**)[3][4][2][OUTER_SOALEN]) qphix_ferm;
   int nvecs = nx / (2 * OUTER_SOALEN);
   int pxy = nvecs * nx;
   int pxyz = pxy * nx;
@@ -198,8 +199,9 @@ void to_qc_single(float * output,
 // this will be a fermion with indices (t, z, y, x, c, s)
 // spin (and real/imag) run fastest
 void from_qc_single(float * input,
-    QPHIX_FERM(psi_s),
+    double ** qphix_ferm,
     int nx, int nt) {
+  QPHIX_FERM(psi_s) = (double (**)[3][4][2][OUTER_SOALEN]) qphix_ferm;
   int nvecs = nx / (2 * OUTER_SOALEN);
   int pxy = nvecs * nx;
   int pxyz = pxy * nx;

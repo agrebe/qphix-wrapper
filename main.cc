@@ -149,7 +149,7 @@ void run_test(Params * params_pointer, int solve_num) {
   end = omp_get_wtime();
   printf("Pre-inversion setup time: %f sec\n", end - start);
 
-  invert(chi_s, psi_s, (void *) &params);
+  invert((double **) chi_s, (double **) psi_s, (void *) &params);
 
   printf("psi_s[0][0][0][0][0][0] = %f\n", psi_s[0][0][0][0][0][0]);
   printf("psi_s[1][0][0][0][0][0] = %f\n", psi_s[1][0][0][0][0][0]);
@@ -209,9 +209,10 @@ void run_test(Params * params_pointer, int solve_num) {
 int main(int argc, char **argv) {
   setup_QDP(&argc, &argv);
 
-  char filename [] = "cl3_32_48_b6p1_m0p2450-sgf.lime";
-  double mass=-0.245;
-  double clov_coeff=1.24930970916466;
+  char filename [] = "su3_16_32_b5p87793.lime1000";
+  double kappa = 0.109;
+  double mass=1.0/(2*kappa) - 4;
+  double clov_coeff=1.87567;
   Params * params = (Params*) create_solver(mass, clov_coeff, (char*) filename);
   omp_set_nested(1);
   for (int j = 0; j < 6; j ++) {
