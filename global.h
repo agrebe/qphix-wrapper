@@ -1,11 +1,11 @@
 #pragma once
 
 #define OUTER_PREC   double
-#define OUTER_VECLEN 8
-#define OUTER_SOALEN 8
+#define OUTER_VECLEN 4
+#define OUTER_SOALEN 4
 #define COMPRESS     true
 #define INNER_PREC   float
-#define INNER_VECLEN 16
+#define INNER_VECLEN 8
 #define INNER_SOALEN 8
 #define GAUGE_TYPE   QDP::LatticeColorMatrixD
 #define FERM_TYPE    QDP::LatticeDiracFermionD
@@ -17,16 +17,3 @@
 #else
 #define EXTERN_C
 #endif
-
-struct CliArgs {
-  int nrow_in[4] = {32, 32, 32, 48};
-
-  int By = 4;
-  int Bz = 4;
-  int PadXY = 0;
-  int PadXYZ = 0;
-  int NCores = 40;
-  int Sy = 1;
-  int Sz = 1;
-  int MinCt = 1;
-};

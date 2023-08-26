@@ -10,6 +10,20 @@
 #include "setup.h"
 #include "params.h"
 
+struct CliArgs {
+  int nrow_in[4];
+  int By;
+  int Bz;
+  int PadXY;
+  int PadXYZ;
+  int NCores;
+  int Sy;
+  int Sz;
+  int MinCt;
+};
+
+CliArgs args;
+
 // WARNING: This is not thread safe
 // Wrap calls to this in #pragma omp critical if needed
 void * allocate_spinor(void * params) {
@@ -25,7 +39,17 @@ void free_spinor(void * params, void * spinor) {
 }
 
 void setup_QDP(int * argc, char *** argv) {
-  CliArgs args;
+  args.nrow_in[0] = args.nrow_in[1] = args.nrow_in[2] = 16;
+  args.nrow_in[3] = 32;
+  args.By = 4;
+  args.Bz = 4;
+  args.PadXY= 0;
+  args.PadXYZ = 0;
+  args.NCores = 6;
+  args.Sy = 1;
+  args.Sz = 1;
+  args.MinCt = 1;
+
   printf("Initializing QDP\n");
   QDP_initialize(argc, argv);
   printf("QDP initialized\n");
@@ -50,7 +74,6 @@ void * create_solver(double mass,
                      char * filename_char)
 {
   std::string filename (filename_char);
-  CliArgs args;
   Params * params = (Params *) malloc(sizeof(Params));
   params->geom = new Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> 
                   (Layout::subgridLattSize().slice(),
