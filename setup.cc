@@ -38,9 +38,14 @@ void free_spinor(void * params, void * spinor) {
     (typename QPhiX::Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock *) spinor);
 }
 
+void init_dims(int nx, int ny, int nz, int nt) {
+  args.nrow_in[0] = nx;
+  args.nrow_in[1] = ny;
+  args.nrow_in[2] = nz;
+  args.nrow_in[3] = nt;
+}
+
 void setup_QDP(int * argc, char *** argv) {
-  args.nrow_in[0] = args.nrow_in[1] = args.nrow_in[2] = 16;
-  args.nrow_in[3] = 32;
   args.By = 4;
   args.Bz = 4;
   args.PadXY= 0;
@@ -69,11 +74,29 @@ void setup_QDP(int * argc, char *** argv) {
 
 using namespace std;
 using namespace QPhiX;
+double * read_gauge(char * filename_char) {
+  QDP::multi1d<GAUGE_TYPE> * u = new QDP::multi1d<GAUGE_TYPE>(4);
+  std::string filename (filename_char);
+  QDPIO::cout << "Inititalizing QDP++ gauge field" << endl;
+
+  // Make a random gauge field
+  // Start up the gauge field somehow
+  // We choose: u = reunit(  1 + factor*gaussian(u) );
+  // Adjust factor to get reasonable inversion times in invert test.
+  // Bug gauge field is always unitary
+
+
+  QDPIO::cout << "Reading field from file" << filename << endl;
+  XMLReader file_xml, record_xml;
+  QDPFileReader from(file_xml, filename, QDPIO_PARALLEL);
+  read(from, record_xml, *u);
+  close(from);
+  return (double*) u;
+}
+
 void * create_solver(double mass,
                      double clov_coeff,
-                     char * filename_char)
-{
-  std::string filename (filename_char);
+                     double * u) {
   Params * params = (Params *) malloc(sizeof(Params));
   params->geom = new Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> 
                   (Layout::subgridLattSize().slice(),
@@ -86,7 +109,7 @@ void * create_solver(double mass,
                    args.PadXYZ,
                    args.MinCt,
                    true);
-  params->u = new multi1d<GAUGE_TYPE>(4);
+  params->u = (QDP::multi1d<GAUGE_TYPE> *) u;
 
   typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock Spinor;
   typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::SU3MatrixBlock Gauge;
@@ -103,22 +126,6 @@ void * create_solver(double mass,
   int Ny = lattSize[1];
   int Nz = lattSize[2];
   int Nt = lattSize[3];
-
-  // What we consider to be small enough...
-  QDPIO::cout << "Inititalizing QDP++ gauge field" << endl;
-
-  // Make a random gauge field
-  // Start up the gauge field somehow
-  // We choose: u = reunit(  1 + factor*gaussian(u) );
-  // Adjust factor to get reasonable inversion times in invert test.
-  // Bug gauge field is always unitary
-
-
-  QDPIO::cout << "Reading field from file" << filename << endl;
-  XMLReader file_xml, record_xml;
-  QDPFileReader from(file_xml, filename, QDPIO_PARALLEL);
-  read(from, record_xml, *params->u);
-  close(from);
 
   // Set anisotropy parameters -- pick some random numbers
   double xi_0_f = 1.0;

@@ -64,53 +64,6 @@ void pion_correlator(double * correlator,
   } // cb
 }
 
-// FIXME: I think this method is wrong but don't know why
-void pion_correlator_wall_sink(double * correlator,
-    typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock **psi_s,
-    const Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> &s)
-{
-  // Get the subgrid latt size.
-  int Nt = s.Nt();
-  int Nz = s.Nz();
-  int Ny = s.Ny();
-  int Nxh = s.Nxh();
-  int nvecs = s.nVecs();
-  int Pxy = s.getPxy();
-  int Pxyz = s.getPxyz();
-  printf("Pxy = %d\n", Pxy);
-  printf("Pxyz = %d\n", Pxyz);
-  int nt = Nt;
-  int nx = Nz;
-  for (int t = 0; t < nt; t ++) {
-    double wall_sink_re, wall_sink_im;
-    for (int z = 0; z < nx; z ++) {
-      for (int y = 0; y < nx; y ++) {
-        for (int x_full = 0; x_full < nx; x_full ++) {
-          int x = x_full;
-          // find index of position
-          // first find checkerboard
-          int cb = (x + y + z + t) % 2;
-          x /= 2;
-          // then find vector index
-          int v = x % OUTER_SOALEN;
-          x /= OUTER_SOALEN;
-          // finally get index in lattice
-          // x runs fastest, t is slowest
-          int index = ((t * nx + z) * nx + y) * nx / (OUTER_SOALEN * 2) + x;
-          for (int col = 0; col < 3; col++) {
-            for (int spin = 0; spin < 4; spin++) {
-              wall_sink_re += psi_s[cb][index][col][spin][0][v];
-              wall_sink_im += psi_s[cb][index][col][spin][1][v];
-            }
-          }
-        }
-      }
-    }
-    correlator[t] += wall_sink_re * wall_sink_re;
-                   + wall_sink_im * wall_sink_im;
-  }
-}
-
 void run_test(Params * params_pointer, int solve_num) {
   Params params = *params_pointer;
   typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock Spinor;
@@ -126,13 +79,9 @@ void run_test(Params * params_pointer, int solve_num) {
 
   QDPIO::cout << "Allocating packed spinor fields" << endl;
 
-  double ** psi_s = (double **) malloc(sizeof(double*) * 2);
-  double ** chi_s = (double **) malloc(sizeof(double*) * 2);
-  int vol = Nx * Nx * Nx * Nt; // FIXME
-  for (int j = 0; j < 2; j ++) {
-    psi_s[j] = (double*) malloc(sizeof(double) * 12 * 2 * vol);
-    chi_s[j] = (double*) malloc(sizeof(double) * 12 * 2 * vol);
-  }
+  int vol = Nx * Nx * Nx * Nt;
+  double ** psi_s = create_ferm(vol);
+  double ** chi_s = create_ferm(vol);
   double * correlator = (double *) malloc(sizeof(double) * Nt * 2);
 
   // Make a random source
@@ -151,10 +100,7 @@ void run_test(Params * params_pointer, int solve_num) {
 
   // check that we get the same answers after converting to SpinMat format
   double * spin_mat;
-  #pragma omp critical
-  {
-    spin_mat = (double *) malloc(sizeof(double) * Nt * Nx * Nx * Nx * 144 * 2);
-  }
+  spin_mat = (double *) malloc(sizeof(double) * Nt * Nx * Nx * Nx * 144 * 2);
 
   start = omp_get_wtime();
   to_spin_mat(spin_mat, chi_s, 0, 0, Nx, Nt);
@@ -166,26 +112,26 @@ void run_test(Params * params_pointer, int solve_num) {
 
   for (int t = 0; t < 8; t ++)
     printf("t = %d: %e\n", t, correlator[t]);
-  for (int j = 0; j < 2; j ++) {
-    free(psi_s[j]);
-    free(chi_s[j]);
-  }
-  free(psi_s);
-  free(chi_s);
+  destroy_ferm(psi_s);
+  destroy_ferm(chi_s);
+  free(spin_mat);
   end = omp_get_wtime();
   printf("Post-inversion time: %f sec\n", end - start);
 }
 
 
 int main(int argc, char **argv) {
+  //init_dims(32, 32, 32, 64);
+  init_dims(16, 16, 16, 32);
   setup_QDP(&argc, &argv);
 
   char filename [] = "su3_16_32_b5p87793.lime1000";
+  //char filename [] = "su3_32_64_b6p30168.lime1";
   double kappa = 0.109;
   double mass=1.0/(2*kappa) - 4;
   double clov_coeff=1.87567;
-  Params * params = (Params*) create_solver(mass, clov_coeff, (char*) filename);
-  omp_set_nested(1);
+  double * u = read_gauge((char*) filename);
+  Params * params = (Params*) create_solver(mass, clov_coeff, u);
   for (int j = 0; j < 6; j ++) {
     run_test(params, j);
   }
