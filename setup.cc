@@ -74,7 +74,7 @@ void setup_QDP(int * argc, char *** argv) {
 
 using namespace std;
 using namespace QPhiX;
-double * read_gauge(char * filename_char) {
+double * load_gauge(char * filename_char) {
   QDP::multi1d<GAUGE_TYPE> * u = new QDP::multi1d<GAUGE_TYPE>(4);
   std::string filename (filename_char);
   QDPIO::cout << "Inititalizing QDP++ gauge field" << endl;

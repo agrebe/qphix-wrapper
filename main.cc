@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
   double kappa = 0.109;
   double mass=1.0/(2*kappa) - 4;
   double clov_coeff=1.87567;
-  double * u = read_gauge((char*) filename);
+  double * u = load_gauge((char*) filename);
   Params * params = (Params*) create_solver(mass, clov_coeff, u);
   for (int j = 0; j < 6; j ++) {
     run_test(params, j);
