@@ -231,17 +231,17 @@ void * create_solver(double mass,
 
 
   QDPIO::cout << "Allocate Packed Clover Term" << endl;
-  Clover *A_cb0 = (Clover *)params->geom->allocCBClov();
-  Clover *A_cb1 = (Clover *)params->geom->allocCBClov();
-  Clover *A_inv_cb0 = (Clover *)params->geom->allocCBClov();
-  Clover *A_inv_cb1 = (Clover *)params->geom->allocCBClov();
+  Clover *A_cb0 = params->geom->allocCBClov();
+  Clover *A_cb1 = params->geom->allocCBClov();
+  Clover *A_inv_cb0 = params->geom->allocCBClov();
+  Clover *A_inv_cb1 = params->geom->allocCBClov();
   Clover *invclov_packed[2] = {A_inv_cb0, A_inv_cb1};
   Clover *clov_packed[2] = {A_cb0, A_cb1};
 
-  CloverInner *A_cb0_i = (CloverInner *)geom_inner->allocCBClov();
-  CloverInner *A_cb1_i = (CloverInner *)geom_inner->allocCBClov();
-  CloverInner *A_inv_cb0_i = (CloverInner *)geom_inner->allocCBClov();
-  CloverInner *A_inv_cb1_i = (CloverInner *)geom_inner->allocCBClov();
+  CloverInner *A_cb0_i = geom_inner->allocCBClov();
+  CloverInner *A_cb1_i = geom_inner->allocCBClov();
+  CloverInner *A_inv_cb0_i = geom_inner->allocCBClov();
+  CloverInner *A_inv_cb1_i = geom_inner->allocCBClov();
   CloverInner *invclov_packed_i[2] = {A_inv_cb0_i, A_inv_cb1_i};
   CloverInner *clov_packed_i[2] = {A_cb0_i, A_cb1_i};
 
@@ -308,5 +308,12 @@ void * create_solver(double mass,
     = new InvBiCGStab<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>(*M_inner, max_iters);
   params->solver = new InvRichardsonMultiPrec<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS, INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>
                       (*M, *solver_inner, 0.1, 5000);
+
+  // free the clover pieces we no longer need
+  free(clov_packed[0]);
+  free(clov_packed_i[0]);
+  // NOTE: This leads to problems if we try to free invclov_i.  Why?
+  free(invclov_packed[1]);
+
   return (void *) params;
 }
