@@ -28,3 +28,9 @@ EXTERN_C void to_qc_single(float * output,
 EXTERN_C void from_qc_single(float * input,
     double ** qphix_ferm,
     int nx, int nt);
+EXTERN_C void to_qc_double(double * output,
+    double ** qphix_ferm,
+    int nx, int nt);
+EXTERN_C void from_qc_double(double * input,
+    double ** qphix_ferm,
+    int nx, int nt);
