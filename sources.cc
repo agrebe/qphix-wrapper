@@ -4,6 +4,21 @@
 using namespace std;
 using namespace QPhiX;
 
+// create and destroy fermions
+// these are passed as (double **) to maintain external compatibility
+double ** create_ferm(int vol) {
+  double ** ferm = (double **) malloc(sizeof(double*) * 2);
+  for (int i = 0; i < 2; i ++)
+    ferm[i] = (double*) malloc(sizeof(double) * 12 * 2 * vol);
+  return ferm;
+}
+
+void destroy_ferm(double ** ferm) {
+  for (int i = 0; i < 2; i ++)
+    free(ferm[i]);
+  free(ferm);
+}
+
 void point_source(double ** qphix_ferm,
                   int x, int y, int z, int t,
                   int spin, int col,
