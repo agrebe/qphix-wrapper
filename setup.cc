@@ -74,6 +74,34 @@ void setup_QDP(int * argc, char *** argv) {
 
 using namespace std;
 using namespace QPhiX;
+
+void * create_geometry(int inner) {
+  if (inner)
+    return (void*) (new Geometry<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS> 
+                  (Layout::subgridLattSize().slice(),
+                   args.By,
+                   args.Bz,
+                   args.NCores,
+                   args.Sy,
+                   args.Sz,
+                   args.PadXY,
+                   args.PadXYZ,
+                   args.MinCt,
+                   true));
+  else
+    return (void*) (new Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> 
+                  (Layout::subgridLattSize().slice(),
+                   args.By,
+                   args.Bz,
+                   args.NCores,
+                   args.Sy,
+                   args.Sz,
+                   args.PadXY,
+                   args.PadXYZ,
+                   args.MinCt,
+                   true));
+}
+
 double * load_gauge(char * filename_char) {
   QDP::multi1d<GAUGE_TYPE> * u = new QDP::multi1d<GAUGE_TYPE>(4);
   std::string filename (filename_char);
@@ -94,21 +122,48 @@ double * load_gauge(char * filename_char) {
   return (double*) u;
 }
 
+void pack_gauge(double * gauge,
+                double ** packed_gauge,
+                float ** packed_gauge_inner,
+                void * geometry,
+                void * geometry_inner) {
+  Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> * geom 
+    = (Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> *)
+                    geometry;
+  Geometry<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS> * geom_inner
+    = (Geometry<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS> *)
+                    geometry_inner;
+  typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::SU3MatrixBlock Gauge;
+  typedef typename Geometry<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>::SU3MatrixBlock GaugeInner;
+  QDPIO::cout << "Allocating packed gauge fields" << endl;
+  packed_gauge[0] = (double*) geom->allocCBGauge();
+  packed_gauge[1] = (double*) geom->allocCBGauge();
+
+  packed_gauge_inner[0] = (float*) geom_inner->allocCBGauge();
+  packed_gauge_inner[1] = (float*) geom_inner->allocCBGauge();
+
+  // Pack the gauge field
+  QDPIO::cout << "Packing gauge field...";
+  qdp_pack_gauge<>(*(QDP::multi1d<GAUGE_TYPE>*) gauge, 
+                   (Gauge*) packed_gauge[0], 
+                   (Gauge*) packed_gauge[1], *geom);
+  qdp_pack_gauge<>(*(QDP::multi1d<GAUGE_TYPE>*) gauge, 
+                   (GaugeInner*) packed_gauge_inner[0], 
+                   (GaugeInner*) packed_gauge_inner[1], *geom_inner);
+
+  QDPIO::cout << "done" << endl;
+}
+
 void * create_solver(double mass,
                      double clov_coeff,
-                     double * u) {
+                     void * geometry,
+                     void * geometry_inner,
+                     double * u,
+                     double ** packed_gauge,
+                     float ** packed_gauge_inner) {
   Params * params = (Params *) malloc(sizeof(Params));
-  params->geom = new Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> 
-                  (Layout::subgridLattSize().slice(),
-                   args.By,
-                   args.Bz,
-                   args.NCores,
-                   args.Sy,
-                   args.Sz,
-                   args.PadXY,
-                   args.PadXYZ,
-                   args.MinCt,
-                   true);
+  params->geom = (Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS> *)
+                    geometry;
   params->u = (QDP::multi1d<GAUGE_TYPE> *) u;
 
   typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::FourSpinorBlock Spinor;
@@ -175,13 +230,6 @@ void * create_solver(double mass,
   QDPIO::cout << "Finished creating geom_inner" << endl;
 
 
-  QDPIO::cout << "Allocating packged gauge fields" << endl;
-  Gauge *packed_gauge_cb0 = (Gauge *)params->geom->allocCBGauge();
-  Gauge *packed_gauge_cb1 = (Gauge *)params->geom->allocCBGauge();
-
-  GaugeInner *packed_gauge_cb0_i = (GaugeInner *)geom_inner->allocCBGauge();
-  GaugeInner *packed_gauge_cb1_i = (GaugeInner *)geom_inner->allocCBGauge();
-
   QDPIO::cout << "Allocate Packed Clover Term" << endl;
   Clover *A_cb0 = (Clover *)params->geom->allocCBClov();
   Clover *A_cb1 = (Clover *)params->geom->allocCBClov();
@@ -199,18 +247,8 @@ void * create_solver(double mass,
 
   QDPIO::cout << "Fields allocated" << endl;
 
-  // Pack the gauge field
-  QDPIO::cout << "Packing gauge field...";
-  qdp_pack_gauge<>(*params->u, packed_gauge_cb0, packed_gauge_cb1, *params->geom);
-  qdp_pack_gauge<>(*params->u, packed_gauge_cb0_i, packed_gauge_cb1_i, *geom_inner);
-
-  Gauge *u_packed[2];
-  u_packed[0] = packed_gauge_cb0;
-  u_packed[1] = packed_gauge_cb1;
-
-  GaugeInner *u_packed_i[2];
-  u_packed_i[0] = packed_gauge_cb0_i;
-  u_packed_i[1] = packed_gauge_cb1_i;
+  Gauge **u_packed = (Gauge**) packed_gauge;
+  GaugeInner **u_packed_i = (GaugeInner**) packed_gauge_inner;
 
   QDPIO::cout << "done" << endl;
 

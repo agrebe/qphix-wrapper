@@ -121,17 +121,26 @@ void run_test(Params * params_pointer, int solve_num) {
 
 
 int main(int argc, char **argv) {
-  //init_dims(32, 32, 32, 64);
   init_dims(16, 16, 16, 32);
+  //init_dims(24, 24, 24, 48);
+  //init_dims(32, 32, 32, 64);
   setup_QDP(&argc, &argv);
 
   char filename [] = "su3_16_32_b5p87793.lime1000";
+  //char filename [] = "su3_24_48_b6p10050.lime1";
   //char filename [] = "su3_32_64_b6p30168.lime1";
   double kappa = 0.109;
   double mass=1.0/(2*kappa) - 4;
   double clov_coeff=1.87567;
   double * u = load_gauge((char*) filename);
-  Params * params = (Params*) create_solver(mass, clov_coeff, u);
+  void * geom = create_geometry(0);
+  void * geom_inner = create_geometry(1);
+  double * packed_gauge[2];
+  float * packed_gauge_inner[2];
+  pack_gauge(u, packed_gauge, packed_gauge_inner, geom, geom_inner);
+  Params * params = (Params*) create_solver(mass, clov_coeff, 
+                                            geom, geom_inner, u,
+                                            packed_gauge, packed_gauge_inner);
   for (int j = 0; j < 6; j ++) {
     run_test(params, j);
   }
