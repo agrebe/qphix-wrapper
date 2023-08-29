@@ -217,18 +217,7 @@ void * create_solver(double mass,
   double t_boundary = double(-1);
   // Create Dslash
   Geometry<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS> * geom_inner
-    = new Geometry<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS>(Layout::subgridLattSize().slice(),
-                                               args.By,
-                                               args.Bz,
-                                               args.NCores,
-                                               args.Sy,
-                                               args.Sz,
-                                               args.PadXY,
-                                               args.PadXYZ,
-                                               args.MinCt,
-                                               true);
-  QDPIO::cout << "Finished creating geom_inner" << endl;
-
+    = (Geometry<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS> *) geometry_inner;
 
   QDPIO::cout << "Allocate Packed Clover Term" << endl;
   Clover *A_cb0 = params->geom->allocCBClov();
