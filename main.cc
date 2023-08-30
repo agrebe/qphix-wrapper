@@ -83,6 +83,7 @@ void run_test(Params * params_pointer, int solve_num) {
   double ** psi_s = create_ferm(vol);
   double ** chi_s = create_ferm(vol);
   double * correlator = (double *) malloc(sizeof(double) * Nt * 2);
+  for (int i = 0; i < Nt * 2; i ++) correlator[i] = 0;
 
   // Make a random source
   QDPIO::cout << "Initializing QDP++ input spinor" << endl;
