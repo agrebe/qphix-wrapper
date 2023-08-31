@@ -6,7 +6,7 @@
 #define COMPRESS     true
 #define INNER_PREC   float
 #define INNER_VECLEN 8
-#define INNER_SOALEN 8
+#define INNER_SOALEN 4
 #define GAUGE_TYPE   QDP::LatticeColorMatrixD
 #define FERM_TYPE    QDP::LatticeDiracFermionD
 
