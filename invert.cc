@@ -9,13 +9,12 @@ using namespace QPhiX;
 
 void invert(double ** solution,
             double ** input,
-            void * params_pointer) {   // inverter, etc.
+            void * params_pointer, // inverter, etc
+            double rsd_target,
+            int max_iters) {
   QPHIX_FERM(chi_s) = (double (**)[3][4][2][OUTER_SOALEN]) solution;
   QPHIX_FERM(psi_s) = (double (**)[3][4][2][OUTER_SOALEN]) input;
   Params params = *(Params *) params_pointer;
-  // parameters for inversion
-  double rsd_target = 1.0e-12;
-  int max_iters = 5000;
   int target_cb = 1;
   bool verbose = false;
 

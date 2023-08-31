@@ -97,7 +97,9 @@ void run_test(Params * params_pointer, int solve_num) {
   end = omp_get_wtime();
   printf("Pre-inversion setup time: %f sec\n", end - start);
 
-  invert(chi_s, psi_s, (void *) &params);
+  double rsd_target = 1e-6;
+  int max_iters = 5000;
+  invert(chi_s, psi_s, (void *) &params, rsd_target, max_iters);
 
   // check that we get the same answers after converting to SpinMat format
   double * spin_mat;
