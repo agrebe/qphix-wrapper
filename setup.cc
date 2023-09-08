@@ -122,6 +122,17 @@ double * load_gauge(char * filename_char) {
   return (double*) u;
 }
 
+// apply boundary conditions in time
+void apply_t_boundary(double * gauge, double t_boundary) {
+  QDP::multi1d<GAUGE_TYPE> * u = (QDP::multi1d<GAUGE_TYPE> *) gauge;
+  typedef typename Geometry<OUTER_PREC, OUTER_VECLEN, OUTER_SOALEN, COMPRESS>::SU3MatrixBlock Gauge;
+  QDPIO::cout << "Adding on boundary field" << endl;
+  // Modify u (antiperiodic BC's)
+  (*u)[3] *= where(Layout::latticeCoordinate(3) == (Layout::lattSize()[3] - 1),
+                Real(t_boundary),
+                Real(1));
+}
+
 void pack_gauge(double * gauge,
                 double ** packed_gauge,
                 float ** packed_gauge_inner,
@@ -191,6 +202,9 @@ void * create_solver(double mass,
   double aniso_fac_s = (double)(1);
   double aniso_fac_t = (double)(1);
 
+  // boundary conditions
+  double t_boundary = -1;
+
   QDPIO::cout << "Setting Clover Term Parameters" << endl;
 
   CloverFermActParams clparam;
@@ -214,7 +228,6 @@ void * create_solver(double mass,
   clparam.clovCoeffR = Real(clov_coeff);
   clparam.clovCoeffT = Real(clov_coeff);
 
-  double t_boundary = double(-1);
   // Create Dslash
   Geometry<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS> * geom_inner
     = (Geometry<INNER_PREC, INNER_VECLEN, INNER_SOALEN, COMPRESS> *) geometry_inner;
@@ -251,11 +264,6 @@ void * create_solver(double mass,
   // Clover term deals with anisotropy internally -- so use original u field.
   QDPCloverTermT<FERM_TYPE, GAUGE_TYPE> clov_qdp;
 
-  QDPIO::cout << "Adding on boundary field" << endl;
-  // Modify u (antiperiodic BC's)
-  (*params->u)[3] *= where(Layout::latticeCoordinate(3) == (Layout::lattSize()[3] - 1),
-                Real(t_boundary),
-                Real(1));
 
   clov_qdp.create(*params->u, clparam);
   QDPIO::cout << "Inverting Clover Term" << endl;

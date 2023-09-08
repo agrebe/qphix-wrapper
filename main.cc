@@ -141,6 +141,7 @@ int main(int argc, char **argv) {
   double * packed_gauge[2];
   float * packed_gauge_inner[2];
   pack_gauge(u, packed_gauge, packed_gauge_inner, geom, geom_inner);
+  apply_t_boundary(u, -1);
   Params * params = (Params*) create_solver(mass, clov_coeff, 
                                             geom, geom_inner, u,
                                             packed_gauge, packed_gauge_inner);

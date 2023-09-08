@@ -6,6 +6,7 @@ EXTERN_C void setup_QDP(int * argc, char *** argv);
 EXTERN_C void * create_geometry(int inner);
 
 EXTERN_C double * load_gauge(char * filename_char);
+EXTERN_C void apply_t_boundary(double * gauge, double t_boundary);
 EXTERN_C void pack_gauge(double * gauge,
                          double ** packed_gauge,
                          float ** packed_gauge_inner,
