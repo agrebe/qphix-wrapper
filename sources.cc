@@ -186,6 +186,7 @@ void to_qc_single(float * output,
   int pxy = nvecs * nx;
   int pxyz = pxy * nx;
   // adapted from qdp_packer_parscalar.h
+  #pragma omp parallel for collapse (2)
   for (int cb = 0; cb < 2; cb ++) {
     for (int64_t t = 0; t < nt; t++) {
       for (int64_t z = 0; z < nx; z++) {
@@ -226,6 +227,7 @@ void from_qc_single(float * input,
   int pxy = nvecs * nx;
   int pxyz = pxy * nx;
   // adapted from qdp_packer_parscalar.h
+  #pragma omp parallel for collapse (2)
   for (int cb = 0; cb < 2; cb ++) {
     for (int64_t t = 0; t < nt; t++) {
       for (int64_t z = 0; z < nx; z++) {
@@ -265,6 +267,7 @@ void to_qc_double(double * output,
   int pxy = nvecs * nx;
   int pxyz = pxy * nx;
   // adapted from qdp_packer_parscalar.h
+  #pragma omp parallel for collapse (2)
   for (int cb = 0; cb < 2; cb ++) {
     for (int64_t t = 0; t < nt; t++) {
       for (int64_t z = 0; z < nx; z++) {
@@ -302,6 +305,7 @@ void from_qc_double(double * input,
   int pxy = nvecs * nx;
   int pxyz = pxy * nx;
   // adapted from qdp_packer_parscalar.h
+  #pragma omp parallel for collapse (2)
   for (int cb = 0; cb < 2; cb ++) {
     for (int64_t t = 0; t < nt; t++) {
       for (int64_t z = 0; z < nx; z++) {
