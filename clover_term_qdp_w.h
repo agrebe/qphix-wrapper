@@ -860,8 +860,10 @@ void applySiteLoop(int lo, int hi, int MyId, ApplyArgs<T> *arg)
     int site = tab[ssite];
 
     RComplex<REALT> *cchi = (RComplex<REALT> *)&(chi.elem(site).elem(0).elem(0));
-    const RComplex<REALT> *ppsi =
+    const RComplex<REALT> *ppsi_old =
         (const RComplex<REALT> *)&(psi.elem(site).elem(0).elem(0));
+    RComplex<REALT> ppsi [12];
+    memcpy(ppsi, ppsi_old, sizeof(RComplex<REALT>) * 12);
 
     // Unrolled version 3.
     // Took unrolled version 2 and wrote out in real() and imag()
