@@ -24,8 +24,7 @@ void invert(double ** solution,
   unsigned long mv_apps;
   double rsd_final;
 
-  FERM_TYPE psi, psi2, clov_psi,
-      chi, chi2, clov_chi;
+  FERM_TYPE psi, temp, chi;
 
   // unpack psi and precondition
   double time0 = omp_get_wtime();
@@ -33,16 +32,17 @@ void invert(double ** solution,
   qdp_unpack_cb_spinor<>(psi_s[1], psi, *params.geom, 1);
   double time0A = omp_get_wtime();
   Double betaFactor = Real(0.5); // what is this for?  no idea
-  params.invclov_qdp->apply(clov_psi, psi, 1, 0);
+  params.invclov_qdp->apply(temp, psi, 1, 0);
   double time0B = omp_get_wtime();
-  dslash(psi2, *params.u, clov_psi, 1, 1);
+  dslash(temp, *params.u, temp, 1, 1);
   double time0C = omp_get_wtime();
-  psi[rb[1]] += betaFactor * psi2; // sign fitted to data
+  psi[rb[1]] += betaFactor * temp; // sign fitted to data
   double time0D = omp_get_wtime();
   // repackage
-  qdp_pack_spinor<>(psi, psi_s[0], psi_s[1], *params.geom);
+  qdp_pack_cb_spinor<>(psi, psi_s[1], *params.geom, 1);
 
-  qdp_pack_spinor<>(chi, chi_s[0], chi_s[1], *params.geom);
+  // zero out solution vector
+  qdp_pack_cb_spinor<>(chi, chi_s[1], *params.geom, 1);
   double time1 = omp_get_wtime();
 
   // actual inversion
@@ -60,6 +60,7 @@ void invert(double ** solution,
 
   // apply D_{ee}^{-1} to even piece
   params.invclov_qdp->apply(chi, psi, 1, 0);
+  double time2A = omp_get_wtime();
   
 
   // apply post-conditioner matrix R to result of solve
@@ -69,10 +70,14 @@ void invert(double ** solution,
   // somehow the sign/factor of upper right entry seems wrong?
   // replacing -1 with +0.5 gives result that agrees with other methods
   qdp_unpack_cb_spinor<>(chi_s[1], chi, *params.geom, 1);
-  dslash(chi2, *params.u, chi, 1, 0);
-  params.invclov_qdp->apply(clov_chi, chi2, 1, 0);
-  chi[rb[0]] += betaFactor * clov_chi; // sign fitted to data
-  qdp_pack_spinor<>(chi, chi_s[0], chi_s[1], *params.geom);
+  double time2B = omp_get_wtime();
+  dslash(temp, *params.u, chi, 1, 0);
+  double time2C = omp_get_wtime();
+  params.invclov_qdp->apply(temp, temp, 1, 0);
+  double time2D = omp_get_wtime();
+  chi[rb[0]] += betaFactor * temp; // sign fitted to data
+  double time2E = omp_get_wtime();
+  qdp_pack_cb_spinor<>(chi, chi_s[0], *params.geom, 0);
   double time3 = omp_get_wtime();
 
   unsigned long num_cb_sites = Layout::vol() / 2;
@@ -92,4 +97,10 @@ void invert(double ** solution,
   printf(" - packing:                    %f sec\n", time1 - time0D);
   printf("QPhiX inverter time:           %f sec\n", time2 - time1);
   printf("Postconditioner time:          %f sec\n", time3 - time2);
+  printf(" - applying invclov:           %f sec\n", time2A - time2);
+  printf(" - unpacking:                  %f sec\n", time2B - time2A);
+  printf(" - applying dslash:            %f sec\n", time2C - time2B);
+  printf(" - applying invclov:           %f sec\n", time2D - time2C);
+  printf(" - applying 0.5 factor:        %f sec\n", time2E - time2D);
+  printf(" - packing:                    %f sec\n", time3 - time2E);
 }
