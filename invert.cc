@@ -32,9 +32,9 @@ void invert(double ** solution,
   qdp_unpack_cb_spinor<>(psi_s[1], psi, *params.geom, 1);
   double time0A = omp_get_wtime();
   Double betaFactor = Real(0.5); // what is this for?  no idea
-  params.invclov_qdp->apply(temp, psi, 1, 0);
+  params.invclov_qdp->apply(chi, psi, 1, 0);
   double time0B = omp_get_wtime();
-  dslash(temp, *params.u, temp, 1, 1);
+  dslash(temp, *params.u, chi, 1, 1);
   double time0C = omp_get_wtime();
   psi[rb[1]] += betaFactor * temp; // sign fitted to data
   double time0D = omp_get_wtime();
@@ -57,10 +57,6 @@ void invert(double ** solution,
                    target_cb,
                    verbose);
   double time2 = omp_get_wtime();
-
-  // apply D_{ee}^{-1} to even piece
-  params.invclov_qdp->apply(chi, psi, 1, 0);
-  double time2A = omp_get_wtime();
   
 
   // apply post-conditioner matrix R to result of solve
@@ -97,8 +93,7 @@ void invert(double ** solution,
   printf(" - packing:                    %f sec\n", time1 - time0D);
   printf("QPhiX inverter time:           %f sec\n", time2 - time1);
   printf("Postconditioner time:          %f sec\n", time3 - time2);
-  printf(" - applying invclov:           %f sec\n", time2A - time2);
-  printf(" - unpacking:                  %f sec\n", time2B - time2A);
+  printf(" - unpacking:                  %f sec\n", time2B - time2);
   printf(" - applying dslash:            %f sec\n", time2C - time2B);
   printf(" - applying invclov:           %f sec\n", time2D - time2C);
   printf(" - applying 0.5 factor:        %f sec\n", time2E - time2D);
