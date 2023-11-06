@@ -24,25 +24,27 @@ void invert(double ** solution,
   unsigned long mv_apps;
   double rsd_final;
 
-  FERM_TYPE psi, temp, chi;
+  FERM_TYPE ferm, temp;
 
   // unpack psi and precondition
   double time0 = omp_get_wtime();
-  qdp_unpack_cb_spinor<>(psi_s[0], psi, *params.geom, 0);
-  qdp_unpack_cb_spinor<>(psi_s[1], psi, *params.geom, 1);
+
+  // zero out solution vector (ferm starts out as 0)
+  qdp_pack_cb_spinor<>(ferm, chi_s[1], *params.geom, 1);
+
+  qdp_unpack_cb_spinor<>(psi_s[0], ferm, *params.geom, 0);
+  qdp_unpack_cb_spinor<>(psi_s[1], ferm, *params.geom, 1);
   double time0A = omp_get_wtime();
   Double betaFactor = Real(0.5); // what is this for?  no idea
-  params.invclov_qdp->apply(chi, psi, 1, 0);
+  params.invclov_qdp->apply(ferm, ferm, 1, 0);
   double time0B = omp_get_wtime();
-  dslash(temp, *params.u, chi, 1, 1);
+  dslash(temp, *params.u, ferm, 1, 1);
   double time0C = omp_get_wtime();
-  psi[rb[1]] += betaFactor * temp; // sign fitted to data
+  ferm[rb[1]] += betaFactor * temp; // sign fitted to data
   double time0D = omp_get_wtime();
   // repackage
-  qdp_pack_cb_spinor<>(psi, psi_s[1], *params.geom, 1);
+  qdp_pack_cb_spinor<>(ferm, psi_s[1], *params.geom, 1);
 
-  // zero out solution vector
-  qdp_pack_cb_spinor<>(chi, chi_s[1], *params.geom, 1);
   double time1 = omp_get_wtime();
 
   // actual inversion
@@ -65,15 +67,15 @@ void invert(double ** solution,
   //     (  0                1          )
   // somehow the sign/factor of upper right entry seems wrong?
   // replacing -1 with +0.5 gives result that agrees with other methods
-  qdp_unpack_cb_spinor<>(chi_s[1], chi, *params.geom, 1);
+  qdp_unpack_cb_spinor<>(chi_s[1], ferm, *params.geom, 1);
   double time2B = omp_get_wtime();
-  dslash(temp, *params.u, chi, 1, 0);
+  dslash(temp, *params.u, ferm, 1, 0);
   double time2C = omp_get_wtime();
   params.invclov_qdp->apply(temp, temp, 1, 0);
   double time2D = omp_get_wtime();
-  chi[rb[0]] += betaFactor * temp; // sign fitted to data
+  ferm[rb[0]] += betaFactor * temp; // sign fitted to data
   double time2E = omp_get_wtime();
-  qdp_pack_cb_spinor<>(chi, chi_s[0], *params.geom, 0);
+  qdp_pack_cb_spinor<>(ferm, chi_s[0], *params.geom, 0);
   double time3 = omp_get_wtime();
 
   unsigned long num_cb_sites = Layout::vol() / 2;
