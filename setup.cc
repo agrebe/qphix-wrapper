@@ -265,9 +265,16 @@ void * create_solver(double mass,
   QDPCloverTermT<FERM_TYPE, GAUGE_TYPE> clov_qdp;
 
 
-  clov_qdp.create(*params->u, clparam);
+  params->invclov_qdp = new QDPCloverTermT<FERM_TYPE, GAUGE_TYPE>();
+  params->invclov_qdp->create(*params->u, clparam);
+  // pack uninverted clover term into clov_packed
+  for (int cb = 1; cb < 2; cb ++) {
+    qdp_pack_clover<>(*params->invclov_qdp, clov_packed[cb], *params->geom, cb);
+    qdp_pack_clover<>(*params->invclov_qdp, clov_packed_i[cb], *geom_inner, cb);
+  }
+
+  // invert clover term in place
   QDPIO::cout << "Inverting Clover Term" << endl;
-  params->invclov_qdp = new QDPCloverTermT<FERM_TYPE, GAUGE_TYPE>(clov_qdp);
   for (int cb = 0; cb < 1; cb++) {
     params->invclov_qdp->choles(cb);
   }
@@ -277,10 +284,6 @@ void * create_solver(double mass,
   for (int cb = 0; cb < 1; cb++) {
     qdp_pack_clover<>(*params->invclov_qdp, invclov_packed[cb], *params->geom, cb);
     qdp_pack_clover<>(*params->invclov_qdp, invclov_packed_i[cb], *geom_inner, cb);
-  }
-  for (int cb = 1; cb < 2; cb ++) {
-    qdp_pack_clover<>(clov_qdp, clov_packed[cb], *params->geom, cb);
-    qdp_pack_clover<>(clov_qdp, clov_packed_i[cb], *geom_inner, cb);
   }
   QDPIO::cout << "Done" << endl;
 
