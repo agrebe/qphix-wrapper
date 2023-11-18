@@ -86,14 +86,10 @@ class QDPCloverTermT
   //! Invert the clover term on cb
   void ldagdlinv(LatticeREAL &tr_log_diag, int cb);
 
-  //! Get the u field
-  const multi1d<U> &getU() const { return u; }
-
   //! Calculates Tr_D ( Gamma_mat L )
   Real getCloverCoeff(int mu, int nu) const;
 
  private:
-  multi1d<U> u;
   CloverFermActParams param;
   LatticeREAL tr_log_diag_; // Fill this out during create
   // but save the global sum until needed.
@@ -111,15 +107,10 @@ QDPCloverTermT<T, U>::QDPCloverTermT()
 
 // Now copy
 template <typename T, typename U>
-void QDPCloverTermT<T, U>::create(const multi1d<U> &u_,
+void QDPCloverTermT<T, U>::create(const multi1d<U> &u,
                                   const CloverFermActParams &param_,
                                   const QDPCloverTermT<T, U> &from)
 {
-
-  u.resize(Nd);
-  for (int mu = 0; mu < Nd; mu++) {
-    u[mu] = u_[mu];
-  }
   param = param_;
 
   // Apply anisotropy
@@ -154,12 +145,9 @@ void QDPCloverTermT<T, U>::create(const multi1d<U> &u_,
 
 //! Creation routine
 template <typename T, typename U>
-void QDPCloverTermT<T, U>::create(const multi1d<U> &u_,
+void QDPCloverTermT<T, U>::create(const multi1d<U> &u,
                                   const CloverFermActParams &param_)
 {
-
-  u.resize(Nd);
-  u = u_;
   param = param_;
 
   {
